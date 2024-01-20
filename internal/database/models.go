@@ -11,10 +11,10 @@ import (
 )
 
 type User struct {
-	ID          uuid.UUID
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	Name        string
-	Email       string
-	AccessToken string
+	ID        uuid.UUID
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	Name      string
+	Email     string
+	PwdHash   []byte
 }

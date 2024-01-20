@@ -1,5 +1,5 @@
 -- name: CreateUser :one
-INSERT INTO users (id, created_at, updated_at, name, email, access_token)
+INSERT INTO users (id, created_at, updated_at, name, email, pwd_hash)
 VALUES (
         $1,
         $2,
@@ -10,7 +10,12 @@ VALUES (
     )
 RETURNING *;
 
--- name: AuthorizeUser :one
+-- name: UserByEmail :one
 SELECT * FROM users
-WHERE access_token = $1
+WHERE email = $1
+LIMIT 1;
+
+-- name: UserByAuthToken :one
+SELECT * FROM users
+WHERE pwd_hash = $1
 LIMIT 1;

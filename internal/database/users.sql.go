@@ -12,28 +12,8 @@ import (
 	"github.com/google/uuid"
 )
 
-const authorizeUser = `-- name: AuthorizeUser :one
-SELECT id, created_at, updated_at, name, email, access_token FROM users
-WHERE access_token = $1
-LIMIT 1
-`
-
-func (q *Queries) AuthorizeUser(ctx context.Context, accessToken string) (User, error) {
-	row := q.db.QueryRowContext(ctx, authorizeUser, accessToken)
-	var i User
-	err := row.Scan(
-		&i.ID,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.Name,
-		&i.Email,
-		&i.AccessToken,
-	)
-	return i, err
-}
-
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (id, created_at, updated_at, name, email, access_token)
+INSERT INTO users (id, created_at, updated_at, name, email, pwd_hash)
 VALUES (
         $1,
         $2,
@@ -42,16 +22,16 @@ VALUES (
         $5,
         $6
     )
-RETURNING id, created_at, updated_at, name, email, access_token
+RETURNING id, created_at, updated_at, name, email, pwd_hash
 `
 
 type CreateUserParams struct {
-	ID          uuid.UUID
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	Name        string
-	Email       string
-	AccessToken string
+	ID        uuid.UUID
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	Name      string
+	Email     string
+	PwdHash   []byte
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
@@ -61,7 +41,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		arg.UpdatedAt,
 		arg.Name,
 		arg.Email,
-		arg.AccessToken,
+		arg.PwdHash,
 	)
 	var i User
 	err := row.Scan(
@@ -70,7 +50,47 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.UpdatedAt,
 		&i.Name,
 		&i.Email,
-		&i.AccessToken,
+		&i.PwdHash,
+	)
+	return i, err
+}
+
+const userByAuthToken = `-- name: UserByAuthToken :one
+SELECT id, created_at, updated_at, name, email, pwd_hash FROM users
+WHERE pwd_hash = $1
+LIMIT 1
+`
+
+func (q *Queries) UserByAuthToken(ctx context.Context, pwdHash []byte) (User, error) {
+	row := q.db.QueryRowContext(ctx, userByAuthToken, pwdHash)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Name,
+		&i.Email,
+		&i.PwdHash,
+	)
+	return i, err
+}
+
+const userByEmail = `-- name: UserByEmail :one
+SELECT id, created_at, updated_at, name, email, pwd_hash FROM users
+WHERE email = $1
+LIMIT 1
+`
+
+func (q *Queries) UserByEmail(ctx context.Context, email string) (User, error) {
+	row := q.db.QueryRowContext(ctx, userByEmail, email)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Name,
+		&i.Email,
+		&i.PwdHash,
 	)
 	return i, err
 }

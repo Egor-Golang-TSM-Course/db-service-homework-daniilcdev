@@ -5,7 +5,7 @@ CREATE TABLE users (
     updated_at TIMESTAMP NOT NULL,
     name TEXT NOT NULL,
     email TEXT NOT NULL UNIQUE,
-    access_token TEXT NOT NULL
+    pwd_hash BYTEA NOT NULL
 );
 
 -- +goose Down

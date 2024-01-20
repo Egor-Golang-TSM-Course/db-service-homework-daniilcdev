@@ -2,16 +2,16 @@ package userService
 
 import (
 	"context"
-	"crypto"
+
 	"db-service/internal"
 	"db-service/internal/database"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserService struct {
@@ -28,7 +28,6 @@ func (us *UserService) WithDb(db *database.Queries) *UserService {
 }
 
 func (us *UserService) Register(w http.ResponseWriter, r *http.Request) {
-
 	decoder := json.NewDecoder(r.Body)
 
 	params := createUserRequestParams{}
@@ -39,13 +38,26 @@ func (us *UserService) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	pwdBytes := []byte(params.Password)
+	if len(pwdBytes) > 72 {
+		internal.RespondWithError(w, 400, "password is too long")
+		return
+	}
+
+	pwdHash, err := bcrypt.GenerateFromPassword([]byte(params.Password), bcrypt.DefaultCost)
+
+	if err != nil {
+		internal.RespondWithError(w, 500, err.Error())
+		return
+	}
+
 	user, err := us.db.CreateUser(r.Context(), database.CreateUserParams{
-		ID:          uuid.New(),
-		CreatedAt:   time.Now().UTC(),
-		UpdatedAt:   time.Now().UTC(),
-		Name:        params.Name,
-		Email:       params.Email,
-		AccessToken: pwdHashString(params.Email + ":" + params.Password),
+		ID:        uuid.New(),
+		CreatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC(),
+		Name:      params.Name,
+		Email:     params.Email,
+		PwdHash:   pwdHash,
 	})
 
 	if err != nil {
@@ -67,10 +79,21 @@ func (us *UserService) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := us.db.AuthorizeUser(r.Context(), pwdHashString(params.Email+":"+params.Password))
+	pwdBytes := []byte(params.Password)
+	if len(pwdBytes) > 72 {
+		internal.RespondWithError(w, 400, "password is too long")
+		return
+	}
+
+	user, err := us.db.UserByEmail(r.Context(), params.Email)
 
 	if err != nil {
-		internal.RespondWithError(w, 400, fmt.Sprint("user not created:", err))
+		internal.RespondWithError(w, 404, fmt.Sprint("user not found:", err))
+		return
+	}
+
+	if bcrypt.CompareHashAndPassword(user.PwdHash, pwdBytes) != nil {
+		internal.RespondWithJSON(w, 400, "wrong credentials")
 		return
 	}
 
@@ -78,22 +101,15 @@ func (us *UserService) Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func (us *UserService) AuthorizeUser(ctx context.Context, accessToken string) (*database.User, error) {
-	user, err := us.db.AuthorizeUser(ctx, accessToken)
+	user, err := us.db.UserByAuthToken(ctx, []byte(accessToken))
 	return &user, err
 }
 
 func databaseUserToUser(dbUser database.User) User {
 	return User{
-		ID:          dbUser.ID,
-		Name:        dbUser.Name,
-		Email:       dbUser.Email,
-		AccessToken: dbUser.AccessToken,
+		ID:    dbUser.ID,
+		Name:  dbUser.Name,
+		Email: dbUser.Email,
+		Token: string(dbUser.PwdHash),
 	}
-}
-
-func pwdHashString(raw string) string {
-	var bytes []byte = []byte(raw)
-	sha256 := crypto.SHA256.New()
-	sha256.Write(bytes)
-	return base64.URLEncoding.EncodeToString(sha256.Sum(nil))
 }
