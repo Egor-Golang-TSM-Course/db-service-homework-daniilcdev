@@ -21,6 +21,10 @@ func DeletePost(w http.ResponseWriter, r *http.Request, ctx context.Context) {
 
 }
 
+func SearchContent(w http.ResponseWriter, r *http.Request, ctx context.Context) {
+
+}
+
 func GetAllPosts(w http.ResponseWriter, r *http.Request, ctx context.Context) {
 
 }

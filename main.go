@@ -5,6 +5,7 @@ import (
 	"db-service/handlers/auth"
 	"db-service/handlers/comments"
 	"db-service/handlers/posts"
+	"db-service/handlers/tags"
 	"db-service/internal/database"
 	"db-service/middleware"
 	"fmt"
@@ -29,41 +30,52 @@ func main() {
 	}
 	queries := database.New(db)
 
-	r := chi.NewRouter()
+	router := chi.NewRouter()
 
 	userService := auth.NewService().
 		WithDb(queries)
 
-	r.Post("/users/register", userService.Register)
-	r.Post("/users/login", userService.Login)
+	router.Post("/users/register", userService.Register)
+	router.Post("/users/login", userService.Login)
 	m := middleware.Auth(userService)
 
-	r.Group(func(router chi.Router) {
-		router.Use(func(h http.Handler) http.Handler {
+	router.Group(func(r chi.Router) {
+		r.Use(func(h http.Handler) http.Handler {
 			return h
 		})
 
-		router.Post("/posts", m.HandlerFunc(posts.CreatePost))
-		router.Get("/posts", m.HandlerFunc(posts.GetAllPosts))
+		r.Get("/posts", m.HandlerFunc(posts.GetAllPosts))
+		r.Post("/posts", m.HandlerFunc(posts.CreatePost))
 
-		router.Get("/posts/{id}", m.HandlerFunc(posts.GetPost))
-		router.Put("/posts/{id}", m.HandlerFunc(posts.UpdatePost))
-		router.Delete("/posts/{id}", m.HandlerFunc(posts.DeletePost))
+		r.Get("/posts/search", m.HandlerFunc(posts.SearchContent))
+
+		r.Get("/posts/{id}", m.HandlerFunc(posts.GetPost))
+		r.Put("/posts/{id}", m.HandlerFunc(posts.UpdatePost))
+		r.Delete("/posts/{id}", m.HandlerFunc(posts.DeletePost))
 	})
 
-	r.Group(func(router chi.Router) {
-		router.Use(func(h http.Handler) http.Handler {
+	router.Group(func(r chi.Router) {
+		r.Use(func(h http.Handler) http.Handler {
 			return h
 		})
 
-		router.Post("/posts/{postId}/comments", m.HandlerFunc(comments.CreateComment))
-		router.Get("/posts/{postId}/comments", m.HandlerFunc(comments.GetAllComments))
+		r.Get("/posts/{postId}/comments", m.HandlerFunc(comments.GetAllComments))
+		r.Post("/posts/{postId}/comments", m.HandlerFunc(comments.CreateComment))
+	})
+
+	router.Group(func(r chi.Router) {
+		r.Use(func(h http.Handler) http.Handler {
+			return h
+		})
+
+		r.Get("/tags", m.HandlerFunc(tags.GetTags))
+		r.Post("/posts/{postId}/tags", m.HandlerFunc(tags.AddTag))
 	})
 
 	log.Printf("Starting server on port %s\n", serverPort)
 
 	v1 := chi.NewRouter()
-	v1.Mount("/v1", r)
+	v1.Mount("/v1", router)
 	err = http.ListenAndServe(":"+serverPort, v1)
 
 	if err != nil {
