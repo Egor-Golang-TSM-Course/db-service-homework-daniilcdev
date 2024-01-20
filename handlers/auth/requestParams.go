@@ -1,4 +1,4 @@
-package userService
+package auth
 
 type createUserRequestParams struct {
 	Email    string `json:"email"`

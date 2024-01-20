@@ -1,4 +1,4 @@
-package userService
+package auth
 
 import (
 	"context"

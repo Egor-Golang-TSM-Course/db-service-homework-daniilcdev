@@ -1,12 +1,12 @@
 package main
 
 import (
-	"context"
 	"database/sql"
-	"db-service/internal"
+	"db-service/handlers/auth"
+	"db-service/handlers/comments"
+	"db-service/handlers/posts"
 	"db-service/internal/database"
 	"db-service/middleware"
-	"db-service/userService"
 	"fmt"
 	"log"
 	"net/http"
@@ -31,19 +31,34 @@ func main() {
 
 	r := chi.NewRouter()
 
-	userService := userService.NewService().
+	userService := auth.NewService().
 		WithDb(queries)
 
 	r.Post("/users/register", userService.Register)
 	r.Post("/users/login", userService.Login)
-
 	m := middleware.Auth(userService)
-	r.Get("/posts", m.HandlerFunc(func(w http.ResponseWriter, r *http.Request, ctx context.Context) {
-		dbUser := ctx.Value(middleware.UserData).(*database.User)
 
-		log.Printf("secure /posts, user '%s'\n", dbUser.Name)
-		internal.RespondWithJSON(w, 200, dbUser)
-	}))
+	r.Group(func(router chi.Router) {
+		router.Use(func(h http.Handler) http.Handler {
+			return h
+		})
+
+		router.Post("/posts", m.HandlerFunc(posts.CreatePost))
+		router.Get("/posts", m.HandlerFunc(posts.GetAllPosts))
+
+		router.Get("/posts/{id}", m.HandlerFunc(posts.GetPost))
+		router.Put("/posts/{id}", m.HandlerFunc(posts.UpdatePost))
+		router.Delete("/posts/{id}", m.HandlerFunc(posts.DeletePost))
+	})
+
+	r.Group(func(router chi.Router) {
+		router.Use(func(h http.Handler) http.Handler {
+			return h
+		})
+
+		router.Post("/posts/{postId}/comments", m.HandlerFunc(comments.CreateComment))
+		router.Get("/posts/{postId}/comments", m.HandlerFunc(comments.GetAllComments))
+	})
 
 	log.Printf("Starting server on port %s\n", serverPort)
 
