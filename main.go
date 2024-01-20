@@ -46,7 +46,10 @@ func main() {
 	}))
 
 	log.Printf("Starting server on port %s\n", serverPort)
-	err = http.ListenAndServe(":"+serverPort, r)
+
+	v1 := chi.NewRouter()
+	v1.Mount("/v1", r)
+	err = http.ListenAndServe(":"+serverPort, v1)
 
 	if err != nil {
 		fmt.Println(err)
