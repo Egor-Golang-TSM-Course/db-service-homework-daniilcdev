@@ -8,11 +8,16 @@ import (
 	"db-service/internal/database"
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 	"strconv"
 
 	"github.com/go-chi/chi"
 )
+
+var errEmptyTitle = errors.New("restriction violation: title can't be empty")
+var errMissingPostContent = errors.New("missing post data")
+var errNotFound = errors.New("post not found")
 
 type PostsStorage struct {
 	q *database.Queries
@@ -32,10 +37,12 @@ func (s *PostsStorage) CreatePost(w http.ResponseWriter, r *http.Request, ctx co
 	var post database.Post
 
 	switch {
+	case err == io.EOF:
+		err = errMissingPostContent
 	case err != nil:
-		internal.RespondWithError(w, 400, "invalid post data")
+		err = errors.New("invalid post data")
 	case params.Title == "":
-		internal.RespondWithError(w, 400, "post 'title' is empty")
+		err = errEmptyTitle
 	default:
 		user := ctx.Value(auth.UserData).(*database.User)
 		post, err = s.q.CreatePost(ctx, database.CreatePostParams{
@@ -47,7 +54,7 @@ func (s *PostsStorage) CreatePost(w http.ResponseWriter, r *http.Request, ctx co
 
 	switch {
 	case err != nil:
-		internal.RespondWithError(w, 500, err.Error())
+		internal.RespondWithError(w, 400, err.Error())
 	default:
 		internal.RespondWithJSON(w, 200, databasePostToPost(&post))
 	}
@@ -64,6 +71,9 @@ func (s *PostsStorage) GetPost(w http.ResponseWriter, r *http.Request, ctx conte
 		// do nothing
 	default:
 		post, err = s.q.GetPost(ctx, int32(id))
+		if err != nil {
+			err = errNotFound
+		}
 	}
 
 	switch v := err.(type) {
@@ -71,7 +81,7 @@ func (s *PostsStorage) GetPost(w http.ResponseWriter, r *http.Request, ctx conte
 		_ = v
 		internal.RespondWithError(w, 400, "invalid 'postId'")
 	case error:
-		internal.RespondWithError(w, 400, "post not found")
+		internal.RespondWithError(w, 400, err.Error())
 	default:
 		internal.RespondWithJSON(w, 200, databasePostToPost(&post))
 	}
@@ -111,8 +121,10 @@ func (s *PostsStorage) UpdatePost(w http.ResponseWriter, r *http.Request, ctx co
 
 	var post database.Post
 	switch {
+	case err == io.EOF:
+		err = errMissingPostContent
 	case params.Title == "":
-		err = errors.New("restriction violation: title can't be empty")
+		err = errEmptyTitle
 	case err == nil:
 		userData := ctx.Value(auth.UserData).(*database.User)
 		post, err = s.q.UpdatePost(ctx, database.UpdatePostParams{
@@ -121,11 +133,15 @@ func (s *PostsStorage) UpdatePost(w http.ResponseWriter, r *http.Request, ctx co
 			Title:   params.Title,
 			Content: sql.NullString{String: params.Content, Valid: true},
 		})
+
+		if err != nil {
+			err = errNotFound
+		}
 	}
 
 	switch {
 	case err != nil:
-		internal.RespondWithError(w, 400, "unable to update post")
+		internal.RespondWithError(w, 400, err.Error())
 	default:
 		internal.RespondWithJSON(w, 200, databasePostToPost(&post))
 	}
@@ -134,8 +150,6 @@ func (s *PostsStorage) UpdatePost(w http.ResponseWriter, r *http.Request, ctx co
 func (s *PostsStorage) DeletePost(w http.ResponseWriter, r *http.Request, ctx context.Context) {
 	postId := chi.URLParam(r, "postId")
 	id, err := strconv.Atoi(postId)
-
-	var post database.Post
 
 	switch {
 	case err == nil:
@@ -153,7 +167,7 @@ func (s *PostsStorage) DeletePost(w http.ResponseWriter, r *http.Request, ctx co
 	case error:
 		internal.RespondWithError(w, 400, "unable to delete post")
 	default:
-		internal.RespondWithJSON(w, 200, databasePostToPost(&post))
+		internal.RespondWithJSON(w, 200, struct{}{})
 	}
 }
 
