@@ -5,10 +5,34 @@
 package database
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
 )
+
+type Post struct {
+	ID        int32
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	Title     string
+	Content   sql.NullString
+	UserID    uuid.UUID
+}
+
+type PostComment struct {
+	ID        uuid.UUID
+	CreatedAt time.Time
+	PostText  string
+	UserID    uuid.UUID
+	PostID    int32
+}
+
+type PostTag struct {
+	ID     int32
+	Tag    string
+	PostID int32
+}
 
 type User struct {
 	ID        uuid.UUID
