@@ -7,7 +7,6 @@ import (
 	"db-service/handlers/posts"
 	"db-service/handlers/tags"
 	"db-service/internal/database"
-	"db-service/middleware"
 	"fmt"
 	"log"
 	"net/http"
@@ -37,13 +36,9 @@ func main() {
 
 	router.Post("/users/register", userService.Register)
 	router.Post("/users/login", userService.Login)
-	m := middleware.Auth(userService)
+	m := auth.NewMiddleware(userService)
 
 	router.Group(func(r chi.Router) {
-		r.Use(func(h http.Handler) http.Handler {
-			return h
-		})
-
 		r.Get("/posts", m.HandlerFunc(posts.GetAllPosts))
 		r.Post("/posts", m.HandlerFunc(posts.CreatePost))
 
@@ -55,19 +50,11 @@ func main() {
 	})
 
 	router.Group(func(r chi.Router) {
-		r.Use(func(h http.Handler) http.Handler {
-			return h
-		})
-
 		r.Get("/posts/{postId}/comments", m.HandlerFunc(comments.GetAllComments))
 		r.Post("/posts/{postId}/comments", m.HandlerFunc(comments.CreateComment))
 	})
 
 	router.Group(func(r chi.Router) {
-		r.Use(func(h http.Handler) http.Handler {
-			return h
-		})
-
 		r.Get("/tags", m.HandlerFunc(tags.GetTags))
 		r.Post("/posts/{postId}/tags", m.HandlerFunc(tags.AddTag))
 	})

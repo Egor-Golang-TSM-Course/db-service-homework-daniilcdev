@@ -1,4 +1,4 @@
-package middleware
+package auth
 
 import (
 	"context"
@@ -22,7 +22,7 @@ type authMiddleware struct {
 	Auth AuthService
 }
 
-func Auth(authService AuthService) Middleware {
+func NewMiddleware(authService AuthService) Middleware {
 	return &authMiddleware{
 		Auth: authService,
 	}
