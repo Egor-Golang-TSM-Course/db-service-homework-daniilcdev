@@ -28,12 +28,6 @@ type PostComment struct {
 	PostID    int32
 }
 
-type PostTag struct {
-	ID     int32
-	Tag    string
-	PostID int32
-}
-
 type User struct {
 	ID        uuid.UUID
 	CreatedAt time.Time

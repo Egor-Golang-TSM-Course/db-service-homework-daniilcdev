@@ -3,9 +3,9 @@ package main
 import (
 	"database/sql"
 	"db-service/handlers/auth"
-	"db-service/handlers/comments"
 	"db-service/handlers/posts"
 	"db-service/handlers/tags"
+	"db-service/internal"
 	"db-service/internal/database"
 	"fmt"
 	"log"
@@ -39,24 +39,26 @@ func main() {
 	m := auth.NewMiddleware(userService)
 
 	router.Group(func(r chi.Router) {
-		r.Get("/posts", m.HandlerFunc(posts.GetAllPosts))
-		r.Post("/posts", m.HandlerFunc(posts.CreatePost))
+		postsStorage := posts.NewStorage(queries)
 
-		r.Get("/posts/search", m.HandlerFunc(posts.SearchContent))
+		r.Get("/posts", m.HandlerFunc(postsStorage.GetAllPosts))
+		r.Post("/posts", m.HandlerFunc(postsStorage.CreatePost))
 
-		r.Get("/posts/{id}", m.HandlerFunc(posts.GetPost))
-		r.Put("/posts/{id}", m.HandlerFunc(posts.UpdatePost))
-		r.Delete("/posts/{id}", m.HandlerFunc(posts.DeletePost))
+		r.Get("/posts/search", m.HandlerFunc(internal.NotImplemented))
+
+		r.Get("/posts/{postId}", m.HandlerFunc(postsStorage.GetPost))
+		r.Put("/posts/{postId}", m.HandlerFunc(postsStorage.UpdatePost))
+		r.Delete("/posts/{postId}", m.HandlerFunc(postsStorage.DeletePost))
 	})
 
 	router.Group(func(r chi.Router) {
-		r.Get("/posts/{postId}/comments", m.HandlerFunc(comments.GetAllComments))
-		r.Post("/posts/{postId}/comments", m.HandlerFunc(comments.CreateComment))
+		r.Get("/posts/{postId}/comments", m.HandlerFunc(internal.NotImplemented))
+		r.Post("/posts/{postId}/comments", m.HandlerFunc(internal.NotImplemented))
 	})
 
 	router.Group(func(r chi.Router) {
 		r.Get("/tags", m.HandlerFunc(tags.GetTags))
-		r.Post("/posts/{postId}/tags", m.HandlerFunc(tags.AddTag))
+		r.Post("/posts/{postId}/tags", m.HandlerFunc(internal.NotImplemented))
 	})
 
 	log.Printf("Starting server on port %s\n", serverPort)
