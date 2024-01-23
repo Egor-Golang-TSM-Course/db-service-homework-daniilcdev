@@ -29,7 +29,7 @@ func NewStorage(q *database.Queries) *PostsStorage {
 	}
 }
 
-func (s *PostsStorage) CreatePost(w http.ResponseWriter, r *http.Request, ctx context.Context) {
+func (s *PostsStorage) CreatePost(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 
 	params := createPostRequestParams{}
@@ -60,7 +60,7 @@ func (s *PostsStorage) CreatePost(w http.ResponseWriter, r *http.Request, ctx co
 	}
 }
 
-func (s *PostsStorage) GetPost(w http.ResponseWriter, r *http.Request, ctx context.Context) {
+func (s *PostsStorage) GetPost(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	postId := chi.URLParam(r, "postId")
 	id, err := strconv.Atoi(postId)
 
@@ -87,7 +87,7 @@ func (s *PostsStorage) GetPost(w http.ResponseWriter, r *http.Request, ctx conte
 	}
 }
 
-func (s *PostsStorage) GetAllPosts(w http.ResponseWriter, r *http.Request, ctx context.Context) {
+func (s *PostsStorage) GetAllPosts(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	// TODO: Offset and Limit via URL query
 	// TODO: filter by date and tags
 	posts, err := s.q.GetPosts(ctx, database.GetPostsParams{
@@ -106,7 +106,7 @@ func (s *PostsStorage) GetAllPosts(w http.ResponseWriter, r *http.Request, ctx c
 	}
 }
 
-func (s *PostsStorage) UpdatePost(w http.ResponseWriter, r *http.Request, ctx context.Context) {
+func (s *PostsStorage) UpdatePost(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	postId := chi.URLParam(r, "postId")
 	id, err := strconv.Atoi(postId)
 
@@ -147,7 +147,7 @@ func (s *PostsStorage) UpdatePost(w http.ResponseWriter, r *http.Request, ctx co
 	}
 }
 
-func (s *PostsStorage) DeletePost(w http.ResponseWriter, r *http.Request, ctx context.Context) {
+func (s *PostsStorage) DeletePost(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	postId := chi.URLParam(r, "postId")
 	id, err := strconv.Atoi(postId)
 
@@ -171,6 +171,6 @@ func (s *PostsStorage) DeletePost(w http.ResponseWriter, r *http.Request, ctx co
 	}
 }
 
-func SearchContent(w http.ResponseWriter, r *http.Request, ctx context.Context) {
+func SearchContent(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 
 }

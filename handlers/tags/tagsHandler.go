@@ -5,10 +5,10 @@ import (
 	"net/http"
 )
 
-func AddTag(w http.ResponseWriter, r *http.Request, ctx context.Context) {
+func AddTag(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 
 }
 
-func GetTags(w http.ResponseWriter, r *http.Request, ctx context.Context) {
+func GetTags(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 
 }

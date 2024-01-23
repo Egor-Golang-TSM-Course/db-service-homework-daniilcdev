@@ -4,8 +4,10 @@ import (
 	"context"
 	"db-service/internal"
 	"db-service/internal/database"
+	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 )
 
 type AuthService interface {
@@ -16,7 +18,7 @@ type Middleware interface {
 	HandlerFunc(handler middlewareHandler) http.HandlerFunc
 }
 
-type middlewareHandler func(w http.ResponseWriter, r *http.Request, ctx context.Context)
+type middlewareHandler func(ctx context.Context, w http.ResponseWriter, r *http.Request)
 
 type authMiddleware struct {
 	Auth AuthService
@@ -36,14 +38,20 @@ const (
 
 func (m authMiddleware) HandlerFunc(handler middlewareHandler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		apiKey, err := internal.GetAPIKey(r.Header)
+		accessToken, err := getAccessToken(r.Header)
 
 		if err != nil {
 			internal.RespondWithError(w, 403, fmt.Sprintf("Auth error: %v", err))
 			return
 		}
 
-		user, err := m.Auth.AuthorizeUser(r.Context(), apiKey)
+		err = VerifyAccessToken(accessToken)
+		if err != nil {
+			internal.RespondWithError(w, http.StatusUnauthorized, "invalid access token")
+			return
+		}
+
+		user, err := m.Auth.AuthorizeUser(r.Context(), accessToken)
 
 		if err != nil {
 			internal.RespondWithError(w, 400, fmt.Sprintf("unauthorized access %v", err))
@@ -51,6 +59,26 @@ func (m authMiddleware) HandlerFunc(handler middlewareHandler) http.HandlerFunc 
 		}
 
 		ctx := context.WithValue(r.Context(), UserData, user)
-		handler(w, r, ctx)
+		handler(ctx, w, r)
 	}
+}
+
+func getAccessToken(headers http.Header) (string, error) {
+
+	val := headers.Get("Authorization")
+	if val == "" {
+		return "", errors.New("no authentication info found")
+	}
+
+	vals := strings.Split(val, " ")
+
+	if len(vals) != 2 {
+		return "", errors.New("malformed auth header")
+	}
+
+	if vals[0] != "Bearer" {
+		return "", errors.New("malformed first part of auth header")
+	}
+
+	return vals[1], nil
 }

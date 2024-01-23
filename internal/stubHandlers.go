@@ -5,6 +5,6 @@ import (
 	"net/http"
 )
 
-func NotImplemented(w http.ResponseWriter, r *http.Request, ctx context.Context) {
+func NotImplemented(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	RespondWithError(w, 500, "not implemented")
 }
