@@ -63,6 +63,12 @@ func (m authMiddleware) HandlerFunc(handler middlewareHandler) http.HandlerFunc 
 	}
 }
 
+func (us *UserService) AuthorizeUser(ctx context.Context, accessToken string) (*database.User, error) {
+	claims := ParseAccessToken(accessToken)
+	user, err := us.db.UserById(ctx, claims.Id)
+	return &user, err
+}
+
 func getAccessToken(headers http.Header) (string, error) {
 
 	val := headers.Get("Authorization")

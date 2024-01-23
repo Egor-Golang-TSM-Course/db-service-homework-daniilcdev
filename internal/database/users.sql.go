@@ -55,14 +55,14 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 	return i, err
 }
 
-const userByAuthToken = `-- name: UserByAuthToken :one
+const userByEmail = `-- name: UserByEmail :one
 SELECT id, created_at, updated_at, name, email, pwd_hash FROM users
-WHERE pwd_hash = $1
+WHERE email = $1
 LIMIT 1
 `
 
-func (q *Queries) UserByAuthToken(ctx context.Context, pwdHash []byte) (User, error) {
-	row := q.db.QueryRowContext(ctx, userByAuthToken, pwdHash)
+func (q *Queries) UserByEmail(ctx context.Context, email string) (User, error) {
+	row := q.db.QueryRowContext(ctx, userByEmail, email)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -75,14 +75,14 @@ func (q *Queries) UserByAuthToken(ctx context.Context, pwdHash []byte) (User, er
 	return i, err
 }
 
-const userByEmail = `-- name: UserByEmail :one
+const userById = `-- name: UserById :one
 SELECT id, created_at, updated_at, name, email, pwd_hash FROM users
-WHERE email = $1
+WHERE id = $1
 LIMIT 1
 `
 
-func (q *Queries) UserByEmail(ctx context.Context, email string) (User, error) {
-	row := q.db.QueryRowContext(ctx, userByEmail, email)
+func (q *Queries) UserById(ctx context.Context, id uuid.UUID) (User, error) {
+	row := q.db.QueryRowContext(ctx, userById, id)
 	var i User
 	err := row.Scan(
 		&i.ID,

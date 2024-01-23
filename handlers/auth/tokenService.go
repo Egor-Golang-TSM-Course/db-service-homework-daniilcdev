@@ -5,11 +5,11 @@ import (
 	"os"
 
 	"github.com/golang-jwt/jwt"
+	"github.com/google/uuid"
 )
 
 type Claims struct {
-	Id  string `json:"id"`
-	Key []byte `json:"key"`
+	Id uuid.UUID `json:"id"`
 	jwt.StandardClaims
 }
 

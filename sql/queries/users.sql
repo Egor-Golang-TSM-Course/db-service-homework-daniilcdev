@@ -15,7 +15,7 @@ SELECT * FROM users
 WHERE email = $1
 LIMIT 1;
 
--- name: UserByAuthToken :one
+-- name: UserById :one
 SELECT * FROM users
-WHERE pwd_hash = $1
+WHERE id = $1
 LIMIT 1;

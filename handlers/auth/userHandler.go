@@ -1,8 +1,6 @@
 package auth
 
 import (
-	"context"
-
 	"db-service/internal"
 	"db-service/internal/database"
 	"encoding/json"
@@ -10,7 +8,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -98,30 +95,6 @@ func (us *UserService) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userData := databaseUserToUser(user)
-	accessToken, _ := NewAccessToken(Claims{
-		Id:  user.ID.String(),
-		Key: user.PwdHash,
-		StandardClaims: jwt.StandardClaims{
-			IssuedAt:  time.Now().Unix(),
-			ExpiresAt: time.Now().Add(time.Hour * 24).Unix(),
-		},
-	})
-	userData.Token = accessToken
-
+	userData := databaseUserToAuthorizedUser(user)
 	internal.RespondWithJSON(w, 200, userData)
-}
-
-func (us *UserService) AuthorizeUser(ctx context.Context, accessToken string) (*database.User, error) {
-	claims := ParseAccessToken(accessToken)
-	user, err := us.db.UserByAuthToken(ctx, claims.Key)
-	return &user, err
-}
-
-func databaseUserToUser(dbUser database.User) User {
-	return User{
-		ID:    dbUser.ID,
-		Name:  dbUser.Name,
-		Email: dbUser.Email,
-	}
 }
