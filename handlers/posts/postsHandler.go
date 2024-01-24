@@ -56,7 +56,7 @@ func (s *PostsStorage) CreatePost(ctx context.Context, w http.ResponseWriter, r 
 	case err != nil:
 		internal.RespondWithError(w, http.StatusBadRequest, err.Error())
 	default:
-		internal.RespondWithJSON(w, http.StatusOK, databasePostToPost(&post))
+		internal.RespondWithJSON(w, http.StatusOK, DatabasePostToPost(&post))
 	}
 }
 
@@ -83,7 +83,7 @@ func (s *PostsStorage) GetPost(w http.ResponseWriter, r *http.Request) {
 	case error:
 		internal.RespondWithError(w, http.StatusBadRequest, err)
 	default:
-		internal.RespondWithJSON(w, http.StatusOK, databasePostToPost(&post))
+		internal.RespondWithJSON(w, http.StatusOK, DatabasePostToPost(&post))
 	}
 }
 
@@ -143,7 +143,7 @@ func (s *PostsStorage) UpdatePost(ctx context.Context, w http.ResponseWriter, r 
 	case err != nil:
 		internal.RespondWithError(w, http.StatusBadRequest, err.Error())
 	default:
-		internal.RespondWithJSON(w, http.StatusOK, databasePostToPost(&post))
+		internal.RespondWithJSON(w, http.StatusOK, DatabasePostToPost(&post))
 	}
 }
 

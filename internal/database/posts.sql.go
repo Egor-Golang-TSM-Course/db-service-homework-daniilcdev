@@ -10,6 +10,7 @@ import (
 	"database/sql"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 const createPost = `-- name: CreatePost :one
@@ -22,7 +23,7 @@ VALUES (
         $2,
         $3
     )
-RETURNING id, created_at, updated_at, title, content, user_id
+RETURNING id, created_at, updated_at, title, content, user_id, tags
 `
 
 type CreatePostParams struct {
@@ -41,6 +42,7 @@ func (q *Queries) CreatePost(ctx context.Context, arg CreatePostParams) (Post, e
 		&i.Title,
 		&i.Content,
 		&i.UserID,
+		pq.Array(&i.Tags),
 	)
 	return i, err
 }
@@ -61,7 +63,7 @@ func (q *Queries) DeletePost(ctx context.Context, arg DeletePostParams) error {
 }
 
 const getPost = `-- name: GetPost :one
-SELECT id, created_at, updated_at, title, content, user_id
+SELECT id, created_at, updated_at, title, content, user_id, tags
 FROM posts
 WHERE posts.id = $1
 `
@@ -76,12 +78,13 @@ func (q *Queries) GetPost(ctx context.Context, id int32) (Post, error) {
 		&i.Title,
 		&i.Content,
 		&i.UserID,
+		pq.Array(&i.Tags),
 	)
 	return i, err
 }
 
 const getPosts = `-- name: GetPosts :many
-SELECT id, created_at, updated_at, title, content, user_id FROM posts
+SELECT id, created_at, updated_at, title, content, user_id, tags FROM posts
 ORDER BY posts.created_at DESC
 OFFSET $1
 LIMIT $2
@@ -108,6 +111,7 @@ func (q *Queries) GetPosts(ctx context.Context, arg GetPostsParams) ([]Post, err
 			&i.Title,
 			&i.Content,
 			&i.UserID,
+			pq.Array(&i.Tags),
 		); err != nil {
 			return nil, err
 		}
@@ -123,7 +127,7 @@ func (q *Queries) GetPosts(ctx context.Context, arg GetPostsParams) ([]Post, err
 }
 
 const getPostsByUser = `-- name: GetPostsByUser :many
-SELECT posts.id, posts.created_at, posts.updated_at, posts.title, posts.content, posts.user_id FROM posts
+SELECT posts.id, posts.created_at, posts.updated_at, posts.title, posts.content, posts.user_id, posts.tags FROM posts
 WHERE posts.user_id = $1
 ORDER BY posts.created_at DESC
 LIMIT $2
@@ -150,6 +154,7 @@ func (q *Queries) GetPostsByUser(ctx context.Context, arg GetPostsByUserParams) 
 			&i.Title,
 			&i.Content,
 			&i.UserID,
+			pq.Array(&i.Tags),
 		); err != nil {
 			return nil, err
 		}
@@ -170,7 +175,7 @@ SET updated_at = NOW(),
  title = $3,
  content = $4
 WHERE id = $1 AND user_id = $2
-RETURNING id, created_at, updated_at, title, content, user_id
+RETURNING id, created_at, updated_at, title, content, user_id, tags
 `
 
 type UpdatePostParams struct {
@@ -195,6 +200,7 @@ func (q *Queries) UpdatePost(ctx context.Context, arg UpdatePostParams) (Post, e
 		&i.Title,
 		&i.Content,
 		&i.UserID,
+		pq.Array(&i.Tags),
 	)
 	return i, err
 }
@@ -204,7 +210,7 @@ UPDATE posts
 SET updated_at = NOW(),
  content = $3
 WHERE id = $1 AND user_id = $2
-RETURNING id, created_at, updated_at, title, content, user_id
+RETURNING id, created_at, updated_at, title, content, user_id, tags
 `
 
 type UpdatePostContentParams struct {
@@ -223,6 +229,7 @@ func (q *Queries) UpdatePostContent(ctx context.Context, arg UpdatePostContentPa
 		&i.Title,
 		&i.Content,
 		&i.UserID,
+		pq.Array(&i.Tags),
 	)
 	return i, err
 }
@@ -232,7 +239,7 @@ UPDATE posts
 SET updated_at = NOW(),
  title = $3
 WHERE id = $1 AND user_id = $2
-RETURNING id, created_at, updated_at, title, content, user_id
+RETURNING id, created_at, updated_at, title, content, user_id, tags
 `
 
 type UpdatePostTitleParams struct {
@@ -251,6 +258,7 @@ func (q *Queries) UpdatePostTitle(ctx context.Context, arg UpdatePostTitleParams
 		&i.Title,
 		&i.Content,
 		&i.UserID,
+		pq.Array(&i.Tags),
 	)
 	return i, err
 }

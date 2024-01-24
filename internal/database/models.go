@@ -18,6 +18,7 @@ type Post struct {
 	Title     string
 	Content   sql.NullString
 	UserID    uuid.UUID
+	Tags      []string
 }
 
 type PostComment struct {
@@ -26,6 +27,12 @@ type PostComment struct {
 	CommentText string
 	UserID      uuid.UUID
 	PostID      int32
+}
+
+type Tag struct {
+	ID        int32
+	Tag       string
+	CreatedAt time.Time
 }
 
 type User struct {

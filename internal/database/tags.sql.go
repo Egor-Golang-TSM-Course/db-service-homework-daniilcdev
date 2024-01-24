@@ -7,41 +7,39 @@ package database
 
 import (
 	"context"
+
+	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
-const createTagForPost = `-- name: CreateTagForPost :exec
-INSERT INTO post_tags (id, tag, post_id)
-VALUES (DEFAULT, $1, $2)
+const addTag = `-- name: AddTag :exec
+INSERT INTO tags (id, tag, created_at) 
+VALUES (DEFAULT, UNNEST($1), NOW()) ON CONFLICT DO NOTHING
 `
 
-type CreateTagForPostParams struct {
-	Tag    string
-	PostID int32
-}
-
-func (q *Queries) CreateTagForPost(ctx context.Context, arg CreateTagForPostParams) error {
-	_, err := q.db.ExecContext(ctx, createTagForPost, arg.Tag, arg.PostID)
+func (q *Queries) AddTag(ctx context.Context, unnest interface{}) error {
+	_, err := q.db.ExecContext(ctx, addTag, unnest)
 	return err
 }
 
-const listTags = `-- name: ListTags :many
-SELECT DISTINCT tag FROM post_tags
+const allTags = `-- name: AllTags :many
+SELECT id, tag, created_at FROM tags
 LIMIT $1
 `
 
-func (q *Queries) ListTags(ctx context.Context, limit int32) ([]string, error) {
-	rows, err := q.db.QueryContext(ctx, listTags, limit)
+func (q *Queries) AllTags(ctx context.Context, limit int32) ([]Tag, error) {
+	rows, err := q.db.QueryContext(ctx, allTags, limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []string
+	var items []Tag
 	for rows.Next() {
-		var tag string
-		if err := rows.Scan(&tag); err != nil {
+		var i Tag
+		if err := rows.Scan(&i.ID, &i.Tag, &i.CreatedAt); err != nil {
 			return nil, err
 		}
-		items = append(items, tag)
+		items = append(items, i)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -50,4 +48,33 @@ func (q *Queries) ListTags(ctx context.Context, limit int32) ([]string, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const updatePostTags = `-- name: UpdatePostTags :one
+UPDATE posts
+SET tags = $3,
+    updated_at = NOW()
+WHERE posts.id = $1 AND posts.user_id = $2
+RETURNING id, created_at, updated_at, title, content, user_id, tags
+`
+
+type UpdatePostTagsParams struct {
+	ID     int32
+	UserID uuid.UUID
+	Tags   []string
+}
+
+func (q *Queries) UpdatePostTags(ctx context.Context, arg UpdatePostTagsParams) (Post, error) {
+	row := q.db.QueryRowContext(ctx, updatePostTags, arg.ID, arg.UserID, pq.Array(arg.Tags))
+	var i Post
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Title,
+		&i.Content,
+		&i.UserID,
+		pq.Array(&i.Tags),
+	)
+	return i, err
 }

@@ -14,12 +14,13 @@ type Post struct {
 	Tags     []string  `json:"tags"`
 }
 
-func databasePostToPost(post *database.Post) Post {
+func DatabasePostToPost(post *database.Post) Post {
 	return Post{
 		Id:       post.ID,
 		Title:    post.Title,
 		Content:  post.Content.String,
 		AuthorId: post.UserID,
+		Tags:     post.Tags,
 	}
 }
 
@@ -27,7 +28,7 @@ func databasePostsToPosts(posts *[]database.Post) []Post {
 	r := make([]Post, 0, len(*posts))
 
 	for _, post := range *posts {
-		r = append(r, databasePostToPost(&post))
+		r = append(r, DatabasePostToPost(&post))
 	}
 	return r
 }

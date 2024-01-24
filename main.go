@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"db-service/adapters"
 	"db-service/handlers/auth"
 	"db-service/handlers/comments"
 	"db-service/handlers/posts"
@@ -60,8 +61,11 @@ func main() {
 	})
 
 	router.Group(func(r chi.Router) {
-		r.Get("/tags", m.HandlerFunc(tags.GetTags))
-		r.Post("/posts/{postId}/tags", m.HandlerFunc(internal.NotImplemented))
+		tqa := adapters.NewTagsQueriesAdapter(queries).WithDb(db)
+		tagsStorage := tags.NewStorage(tqa)
+
+		r.Get("/tags", tagsStorage.GetTags)
+		r.Post("/posts/{postId}/tags", m.HandlerFunc(tagsStorage.AddTag))
 	})
 
 	log.Printf("Starting server on port %s\n", serverPort)
