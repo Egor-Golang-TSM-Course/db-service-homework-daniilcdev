@@ -11,8 +11,6 @@ import (
 	"io"
 	"net/http"
 	"strconv"
-
-	"github.com/go-chi/chi"
 )
 
 var errEmptyTitle = errors.New("restriction violation: title can't be empty")
@@ -50,37 +48,39 @@ func (s *PostsStorage) CreatePost(ctx context.Context, w http.ResponseWriter, r 
 			Content: sql.NullString{Valid: true, String: params.Content},
 			UserID:  user.ID,
 		})
+		if err != nil {
+			err = errNotFound
+		}
 	}
 
 	switch {
+	case err == errNotFound:
+		internal.RespondWithError(w, http.StatusNotFound, err)
 	case err != nil:
-		internal.RespondWithError(w, http.StatusBadRequest, err.Error())
+		internal.RespondWithError(w, http.StatusBadRequest, err)
 	default:
 		internal.RespondWithJSON(w, http.StatusOK, DatabasePostToPost(&post))
 	}
 }
 
 func (s *PostsStorage) GetPost(w http.ResponseWriter, r *http.Request) {
-	postId := chi.URLParam(r, "postId")
-	id, err := strconv.Atoi(postId)
+	postId, err := internal.PostIdFromURLParams(r)
 
-	var post database.Post
-
-	switch {
-	case err != nil:
-		// do nothing
-	default:
-		post, err = s.q.GetPost(r.Context(), int32(id))
-		if err != nil {
-			err = errNotFound
-		}
+	if err != nil {
+		internal.RespondWithError(w, http.StatusBadRequest, err)
+		return
 	}
 
-	switch v := err.(type) {
-	case *strconv.NumError:
-		_ = v
-		internal.RespondWithError(w, http.StatusBadRequest, internal.ErrInvalidPostId)
-	case error:
+	post, err := s.q.GetPost(r.Context(), postId)
+
+	if err != nil {
+		err = errNotFound
+	}
+
+	switch {
+	case err == errNotFound:
+		internal.RespondWithError(w, http.StatusNotFound, internal.ErrInvalidPostId)
+	case err != nil:
 		internal.RespondWithError(w, http.StatusBadRequest, err)
 	default:
 		internal.RespondWithJSON(w, http.StatusOK, DatabasePostToPost(&post))
@@ -90,9 +90,12 @@ func (s *PostsStorage) GetPost(w http.ResponseWriter, r *http.Request) {
 func (s *PostsStorage) GetAllPosts(w http.ResponseWriter, r *http.Request) {
 	// TODO: Offset and Limit via URL query
 	// TODO: filter by date and tags
+	const offset = 0
+	const limit = 10
+
 	posts, err := s.q.GetPosts(r.Context(), database.GetPostsParams{
-		Offset: 0,
-		Limit:  10,
+		Offset: offset,
+		Limit:  limit,
 	})
 
 	switch v := err.(type) {
@@ -107,11 +110,10 @@ func (s *PostsStorage) GetAllPosts(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *PostsStorage) UpdatePost(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	postId := chi.URLParam(r, "postId")
-	id, err := strconv.Atoi(postId)
+	postId, err := internal.PostIdFromURLParams(r)
 
 	if err != nil {
-		internal.RespondWithError(w, http.StatusBadRequest, internal.ErrInvalidPostId)
+		internal.RespondWithError(w, http.StatusBadRequest, err)
 		return
 	}
 
@@ -128,7 +130,7 @@ func (s *PostsStorage) UpdatePost(ctx context.Context, w http.ResponseWriter, r 
 	case err == nil:
 		userData := ctx.Value(auth.UserData).(*database.User)
 		post, err = s.q.UpdatePost(ctx, database.UpdatePostParams{
-			ID:      int32(id),
+			ID:      postId,
 			UserID:  userData.ID,
 			Title:   params.Title,
 			Content: sql.NullString{String: params.Content, Valid: true},
@@ -140,22 +142,23 @@ func (s *PostsStorage) UpdatePost(ctx context.Context, w http.ResponseWriter, r 
 	}
 
 	switch {
+	case err == errNotFound:
+		internal.RespondWithError(w, http.StatusNotFound, err)
 	case err != nil:
-		internal.RespondWithError(w, http.StatusBadRequest, err.Error())
+		internal.RespondWithError(w, http.StatusBadRequest, err)
 	default:
 		internal.RespondWithJSON(w, http.StatusOK, DatabasePostToPost(&post))
 	}
 }
 
 func (s *PostsStorage) DeletePost(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	postId := chi.URLParam(r, "postId")
-	id, err := strconv.Atoi(postId)
+	postId, err := internal.PostIdFromURLParams(r)
 
 	switch {
 	case err == nil:
 		userData := ctx.Value(auth.UserData).(*database.User)
 		err = s.q.DeletePost(ctx, database.DeletePostParams{
-			ID:     int32(id),
+			ID:     postId,
 			UserID: userData.ID,
 		})
 	}

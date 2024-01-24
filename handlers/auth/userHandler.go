@@ -4,26 +4,12 @@ import (
 	"db-service/internal"
 	"db-service/internal/database"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
-
-type UserService struct {
-	db *database.Queries
-}
-
-func NewService() *UserService {
-	return &UserService{}
-}
-
-func (us *UserService) WithDb(db *database.Queries) *UserService {
-	us.db = db
-	return us
-}
 
 func (us *UserService) Register(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
@@ -32,13 +18,13 @@ func (us *UserService) Register(w http.ResponseWriter, r *http.Request) {
 	err := decoder.Decode(&params)
 
 	if err != nil {
-		internal.RespondWithError(w, http.StatusBadRequest, fmt.Sprint("Error parsing JSON", err))
+		internal.RespondWithError(w, http.StatusBadRequest, internal.ErrInvalidJson)
 		return
 	}
 
 	pwdBytes := []byte(params.Password)
-	if len(pwdBytes) > 72 {
-		internal.RespondWithError(w, http.StatusBadRequest, "password is too long")
+	if len(pwdBytes) > 72 || len(pwdBytes) == 0 {
+		internal.RespondWithError(w, http.StatusBadRequest, errInvalidPasswordLength)
 		return
 	}
 
@@ -59,7 +45,7 @@ func (us *UserService) Register(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		internal.RespondWithError(w, http.StatusBadRequest, fmt.Sprint("user not created:", err))
+		internal.RespondWithError(w, http.StatusBadRequest, errCantCreateUser)
 		return
 	}
 
@@ -73,25 +59,25 @@ func (us *UserService) Login(w http.ResponseWriter, r *http.Request) {
 	err := decoder.Decode(&params)
 
 	if err != nil {
-		internal.RespondWithError(w, http.StatusBadRequest, fmt.Sprint("Error parsing JSON", err))
+		internal.RespondWithError(w, http.StatusBadRequest, internal.ErrInvalidJson)
 		return
 	}
 
 	pwdBytes := []byte(params.Password)
-	if len(pwdBytes) > 72 {
-		internal.RespondWithError(w, http.StatusBadRequest, "password is too long")
+	if len(pwdBytes) > 72 || len(pwdBytes) == 0 {
+		internal.RespondWithError(w, http.StatusBadRequest, errInvalidPasswordLength)
 		return
 	}
 
 	user, err := us.db.UserByEmail(r.Context(), params.Email)
 
 	if err != nil {
-		internal.RespondWithError(w, http.StatusNotFound, fmt.Sprint("user not found:", err))
+		internal.RespondWithError(w, http.StatusNotFound, errUserNotFound)
 		return
 	}
 
 	if bcrypt.CompareHashAndPassword(user.PwdHash, pwdBytes) != nil {
-		internal.RespondWithJSON(w, http.StatusBadRequest, "wrong credentials")
+		internal.RespondWithJSON(w, http.StatusBadRequest, errInvalidCredentials)
 		return
 	}
 
