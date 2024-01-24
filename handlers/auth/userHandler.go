@@ -32,20 +32,20 @@ func (us *UserService) Register(w http.ResponseWriter, r *http.Request) {
 	err := decoder.Decode(&params)
 
 	if err != nil {
-		internal.RespondWithError(w, 400, fmt.Sprint("Error parsing JSON", err))
+		internal.RespondWithError(w, http.StatusBadRequest, fmt.Sprint("Error parsing JSON", err))
 		return
 	}
 
 	pwdBytes := []byte(params.Password)
 	if len(pwdBytes) > 72 {
-		internal.RespondWithError(w, 400, "password is too long")
+		internal.RespondWithError(w, http.StatusBadRequest, "password is too long")
 		return
 	}
 
 	pwdHash, err := bcrypt.GenerateFromPassword([]byte(params.Password), bcrypt.DefaultCost)
 
 	if err != nil {
-		internal.RespondWithError(w, 500, err.Error())
+		internal.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -59,11 +59,11 @@ func (us *UserService) Register(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		internal.RespondWithError(w, 400, fmt.Sprint("user not created:", err))
+		internal.RespondWithError(w, http.StatusBadRequest, fmt.Sprint("user not created:", err))
 		return
 	}
 
-	internal.RespondWithJSON(w, 201, databaseUserToUser(user))
+	internal.RespondWithJSON(w, http.StatusCreated, databaseUserToUser(user))
 }
 
 func (us *UserService) Login(w http.ResponseWriter, r *http.Request) {
@@ -73,28 +73,28 @@ func (us *UserService) Login(w http.ResponseWriter, r *http.Request) {
 	err := decoder.Decode(&params)
 
 	if err != nil {
-		internal.RespondWithError(w, 400, fmt.Sprint("Error parsing JSON", err))
+		internal.RespondWithError(w, http.StatusBadRequest, fmt.Sprint("Error parsing JSON", err))
 		return
 	}
 
 	pwdBytes := []byte(params.Password)
 	if len(pwdBytes) > 72 {
-		internal.RespondWithError(w, 400, "password is too long")
+		internal.RespondWithError(w, http.StatusBadRequest, "password is too long")
 		return
 	}
 
 	user, err := us.db.UserByEmail(r.Context(), params.Email)
 
 	if err != nil {
-		internal.RespondWithError(w, 404, fmt.Sprint("user not found:", err))
+		internal.RespondWithError(w, http.StatusNotFound, fmt.Sprint("user not found:", err))
 		return
 	}
 
 	if bcrypt.CompareHashAndPassword(user.PwdHash, pwdBytes) != nil {
-		internal.RespondWithJSON(w, 400, "wrong credentials")
+		internal.RespondWithJSON(w, http.StatusBadRequest, "wrong credentials")
 		return
 	}
 
 	userData := databaseUserToAuthorizedUser(user)
-	internal.RespondWithJSON(w, 200, userData)
+	internal.RespondWithJSON(w, http.StatusOK, userData)
 }

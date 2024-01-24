@@ -54,9 +54,9 @@ func (s *PostsStorage) CreatePost(ctx context.Context, w http.ResponseWriter, r 
 
 	switch {
 	case err != nil:
-		internal.RespondWithError(w, 400, err.Error())
+		internal.RespondWithError(w, http.StatusBadRequest, err.Error())
 	default:
-		internal.RespondWithJSON(w, 200, databasePostToPost(&post))
+		internal.RespondWithJSON(w, http.StatusOK, databasePostToPost(&post))
 	}
 }
 
@@ -79,11 +79,11 @@ func (s *PostsStorage) GetPost(w http.ResponseWriter, r *http.Request) {
 	switch v := err.(type) {
 	case *strconv.NumError:
 		_ = v
-		internal.RespondWithError(w, 400, internal.ErrInvalidPostId)
+		internal.RespondWithError(w, http.StatusBadRequest, internal.ErrInvalidPostId)
 	case error:
-		internal.RespondWithError(w, 400, err)
+		internal.RespondWithError(w, http.StatusBadRequest, err)
 	default:
-		internal.RespondWithJSON(w, 200, databasePostToPost(&post))
+		internal.RespondWithJSON(w, http.StatusOK, databasePostToPost(&post))
 	}
 }
 
@@ -98,11 +98,11 @@ func (s *PostsStorage) GetAllPosts(w http.ResponseWriter, r *http.Request) {
 	switch v := err.(type) {
 	case *strconv.NumError:
 		_ = v
-		internal.RespondWithError(w, 400, internal.ErrInvalidPostId)
+		internal.RespondWithError(w, http.StatusBadRequest, internal.ErrInvalidPostId)
 	case error:
-		internal.RespondWithError(w, 400, "unable get posts")
+		internal.RespondWithError(w, http.StatusBadRequest, "unable get posts")
 	default:
-		internal.RespondWithJSON(w, 200, databasePostsToPosts(&posts))
+		internal.RespondWithJSON(w, http.StatusOK, databasePostsToPosts(&posts))
 	}
 }
 
@@ -111,7 +111,7 @@ func (s *PostsStorage) UpdatePost(ctx context.Context, w http.ResponseWriter, r 
 	id, err := strconv.Atoi(postId)
 
 	if err != nil {
-		internal.RespondWithError(w, 400, internal.ErrInvalidPostId)
+		internal.RespondWithError(w, http.StatusBadRequest, internal.ErrInvalidPostId)
 		return
 	}
 
@@ -141,9 +141,9 @@ func (s *PostsStorage) UpdatePost(ctx context.Context, w http.ResponseWriter, r 
 
 	switch {
 	case err != nil:
-		internal.RespondWithError(w, 400, err.Error())
+		internal.RespondWithError(w, http.StatusBadRequest, err.Error())
 	default:
-		internal.RespondWithJSON(w, 200, databasePostToPost(&post))
+		internal.RespondWithJSON(w, http.StatusOK, databasePostToPost(&post))
 	}
 }
 
@@ -163,11 +163,11 @@ func (s *PostsStorage) DeletePost(ctx context.Context, w http.ResponseWriter, r 
 	switch v := err.(type) {
 	case *strconv.NumError:
 		_ = v
-		internal.RespondWithError(w, 400, internal.ErrInvalidPostId)
+		internal.RespondWithError(w, http.StatusBadRequest, internal.ErrInvalidPostId)
 	case error:
-		internal.RespondWithError(w, 400, "unable to delete post")
+		internal.RespondWithError(w, http.StatusBadRequest, "unable to delete post")
 	default:
-		internal.RespondWithJSON(w, 200, struct{}{})
+		internal.RespondWithJSON(w, http.StatusOK, struct{}{})
 	}
 }
 

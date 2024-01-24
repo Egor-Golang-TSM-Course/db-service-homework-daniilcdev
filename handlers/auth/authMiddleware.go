@@ -54,7 +54,7 @@ func (m authMiddleware) HandlerFunc(handler middlewareHandler) http.HandlerFunc 
 		user, err := m.Auth.AuthorizeUser(r.Context(), accessToken)
 
 		if err != nil {
-			internal.RespondWithError(w, 400, fmt.Sprintf("unauthorized access %v", err))
+			internal.RespondWithError(w, http.StatusBadRequest, fmt.Sprintf("unauthorized access %v", err))
 			return
 		}
 
