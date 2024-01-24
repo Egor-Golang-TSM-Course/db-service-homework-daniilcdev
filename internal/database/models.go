@@ -21,11 +21,11 @@ type Post struct {
 }
 
 type PostComment struct {
-	ID        uuid.UUID
-	CreatedAt time.Time
-	PostText  string
-	UserID    uuid.UUID
-	PostID    int32
+	ID          int32
+	CreatedAt   time.Time
+	CommentText string
+	UserID      uuid.UUID
+	PostID      int32
 }
 
 type User struct {

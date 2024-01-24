@@ -7,42 +7,35 @@ package database
 
 import (
 	"context"
-	"time"
 
 	"github.com/google/uuid"
 )
 
 const createComment = `-- name: CreateComment :one
-INSERT INTO post_comments (id, created_at, post_text, user_id, post_id)
+INSERT INTO post_comments (id, created_at, comment_text, user_id, post_id)
 VALUES (
         DEFAULT,
+        NOW(),
         $1,
         $2,
-        $3,
-        $4
+        $3
     )
-RETURNING id, created_at, post_text, user_id, post_id
+RETURNING id, created_at, comment_text, user_id, post_id
 `
 
 type CreateCommentParams struct {
-	CreatedAt time.Time
-	PostText  string
-	UserID    uuid.UUID
-	PostID    int32
+	CommentText string
+	UserID      uuid.UUID
+	PostID      int32
 }
 
 func (q *Queries) CreateComment(ctx context.Context, arg CreateCommentParams) (PostComment, error) {
-	row := q.db.QueryRowContext(ctx, createComment,
-		arg.CreatedAt,
-		arg.PostText,
-		arg.UserID,
-		arg.PostID,
-	)
+	row := q.db.QueryRowContext(ctx, createComment, arg.CommentText, arg.UserID, arg.PostID)
 	var i PostComment
 	err := row.Scan(
 		&i.ID,
 		&i.CreatedAt,
-		&i.PostText,
+		&i.CommentText,
 		&i.UserID,
 		&i.PostID,
 	)
@@ -50,34 +43,34 @@ func (q *Queries) CreateComment(ctx context.Context, arg CreateCommentParams) (P
 }
 
 const getPostComments = `-- name: GetPostComments :many
-SELECT posts.id, posts.created_at, posts.updated_at, posts.title, posts.content, posts.user_id FROM posts
-JOIN post_comments ON posts.id == post_comments.post_id
-WHERE posts.id == $1
-ORDER BY posts.created_at DESC
-LIMIT $2
+SELECT id, created_at, comment_text, user_id, post_id FROM post_comments
+WHERE post_id = $1
+ORDER BY created_at DESC
+OFFSET $2
+LIMIT $3
 `
 
 type GetPostCommentsParams struct {
-	ID    int32
-	Limit int32
+	PostID int32
+	Offset int32
+	Limit  int32
 }
 
-func (q *Queries) GetPostComments(ctx context.Context, arg GetPostCommentsParams) ([]Post, error) {
-	rows, err := q.db.QueryContext(ctx, getPostComments, arg.ID, arg.Limit)
+func (q *Queries) GetPostComments(ctx context.Context, arg GetPostCommentsParams) ([]PostComment, error) {
+	rows, err := q.db.QueryContext(ctx, getPostComments, arg.PostID, arg.Offset, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Post
+	var items []PostComment
 	for rows.Next() {
-		var i Post
+		var i PostComment
 		if err := rows.Scan(
 			&i.ID,
 			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.Title,
-			&i.Content,
+			&i.CommentText,
 			&i.UserID,
+			&i.PostID,
 		); err != nil {
 			return nil, err
 		}

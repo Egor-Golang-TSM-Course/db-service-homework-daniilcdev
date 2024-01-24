@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"db-service/handlers/auth"
+	"db-service/handlers/comments"
 	"db-service/handlers/posts"
 	"db-service/handlers/tags"
 	"db-service/internal"
@@ -52,8 +53,10 @@ func main() {
 	})
 
 	router.Group(func(r chi.Router) {
-		r.Get("/posts/{postId}/comments", m.HandlerFunc(internal.NotImplemented))
-		r.Post("/posts/{postId}/comments", m.HandlerFunc(internal.NotImplemented))
+		commentsStorage := comments.NewStorage(queries)
+
+		r.Get("/posts/{postId}/comments", commentsStorage.GetAllComments)
+		r.Post("/posts/{postId}/comments", m.HandlerFunc(commentsStorage.CreateComment))
 	})
 
 	router.Group(func(r chi.Router) {

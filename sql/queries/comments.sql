@@ -1,17 +1,17 @@
 -- name: CreateComment :one
-INSERT INTO post_comments (id, created_at, post_text, user_id, post_id)
+INSERT INTO post_comments (id, created_at, comment_text, user_id, post_id)
 VALUES (
         DEFAULT,
+        NOW(),
         $1,
         $2,
-        $3,
-        $4
+        $3
     )
 RETURNING *;
 
 -- name: GetPostComments :many
-SELECT posts.* FROM posts
-JOIN post_comments ON posts.id == post_comments.post_id
-WHERE posts.id == $1
-ORDER BY posts.created_at DESC
-LIMIT $2;
+SELECT * FROM post_comments
+WHERE post_id = $1
+ORDER BY created_at DESC
+OFFSET $2
+LIMIT $3;

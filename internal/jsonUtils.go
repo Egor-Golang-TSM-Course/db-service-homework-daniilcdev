@@ -2,6 +2,7 @@ package internal
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 )
@@ -10,12 +11,12 @@ type errResponse struct {
 	Error string `json:"error"`
 }
 
-func RespondWithError(w http.ResponseWriter, code int, msg string) {
+func RespondWithError(w http.ResponseWriter, code int, msg interface{}) {
 	if code > 499 {
 		log.Println("Responsing with 5XX error:", msg)
 	}
 
-	RespondWithJSON(w, code, errResponse{Error: msg})
+	RespondWithJSON(w, code, errResponse{Error: fmt.Sprintf("%v", msg)})
 }
 
 func RespondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
