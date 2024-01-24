@@ -42,12 +42,12 @@ func main() {
 	router.Group(func(r chi.Router) {
 		postsStorage := posts.NewStorage(queries)
 
-		r.Get("/posts", m.HandlerFunc(postsStorage.GetAllPosts))
+		r.Get("/posts", postsStorage.GetAllPosts)
 		r.Post("/posts", m.HandlerFunc(postsStorage.CreatePost))
 
 		r.Get("/posts/search", m.HandlerFunc(internal.NotImplemented))
 
-		r.Get("/posts/{postId}", m.HandlerFunc(postsStorage.GetPost))
+		r.Get("/posts/{postId}", postsStorage.GetPost)
 		r.Put("/posts/{postId}", m.HandlerFunc(postsStorage.UpdatePost))
 		r.Delete("/posts/{postId}", m.HandlerFunc(postsStorage.DeletePost))
 	})

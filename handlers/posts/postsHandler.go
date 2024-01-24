@@ -60,7 +60,7 @@ func (s *PostsStorage) CreatePost(ctx context.Context, w http.ResponseWriter, r 
 	}
 }
 
-func (s *PostsStorage) GetPost(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func (s *PostsStorage) GetPost(w http.ResponseWriter, r *http.Request) {
 	postId := chi.URLParam(r, "postId")
 	id, err := strconv.Atoi(postId)
 
@@ -70,7 +70,7 @@ func (s *PostsStorage) GetPost(ctx context.Context, w http.ResponseWriter, r *ht
 	case err != nil:
 		// do nothing
 	default:
-		post, err = s.q.GetPost(ctx, int32(id))
+		post, err = s.q.GetPost(r.Context(), int32(id))
 		if err != nil {
 			err = errNotFound
 		}
@@ -87,10 +87,10 @@ func (s *PostsStorage) GetPost(ctx context.Context, w http.ResponseWriter, r *ht
 	}
 }
 
-func (s *PostsStorage) GetAllPosts(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func (s *PostsStorage) GetAllPosts(w http.ResponseWriter, r *http.Request) {
 	// TODO: Offset and Limit via URL query
 	// TODO: filter by date and tags
-	posts, err := s.q.GetPosts(ctx, database.GetPostsParams{
+	posts, err := s.q.GetPosts(r.Context(), database.GetPostsParams{
 		Offset: 0,
 		Limit:  10,
 	})
