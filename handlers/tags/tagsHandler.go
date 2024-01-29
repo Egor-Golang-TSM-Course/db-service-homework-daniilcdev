@@ -6,6 +6,7 @@ import (
 	"db-service/handlers/posts"
 	"db-service/internal"
 	"db-service/internal/database"
+	"db-service/models"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -24,9 +25,9 @@ func (ts *TagsStorage) AddTag(ctx context.Context, w http.ResponseWriter, r *htt
 		return
 	}
 
-	var tagData addTagToPostDto
+	var tagsData models.AddedTags
 	decoder := json.NewDecoder(r.Body)
-	if err = decoder.Decode(&tagData); err != nil || len(tagData.NewTags) == 0 {
+	if err = decoder.Decode(&tagsData); err != nil || len(tagsData.NewTags) == 0 {
 		internal.RespondWithError(w, http.StatusBadRequest, "insufficient tags count: at least 1 expected")
 		return
 	}
@@ -39,7 +40,7 @@ func (ts *TagsStorage) AddTag(ctx context.Context, w http.ResponseWriter, r *htt
 		return
 	}
 
-	tags := append(post.Tags, tagData.NewTags...)
+	tags := append(post.Tags, tagsData.NewTags...)
 
 	{ // remove duplicates
 		unique := make(map[string]struct{}, len(post.Tags))
@@ -90,4 +91,22 @@ func (ts *TagsStorage) GetTags(w http.ResponseWriter, r *http.Request) {
 	} else {
 		internal.RespondWithJSON(w, http.StatusOK, databaseTagsToTags(&tags))
 	}
+}
+
+func databaseTagToTag(tag *database.Tag) models.Tag {
+	return models.Tag{
+		Id:        tag.ID,
+		Tag:       tag.Tag,
+		CreatedAt: tag.CreatedAt,
+	}
+}
+
+func databaseTagsToTags(tags *[]database.Tag) []models.Tag {
+	out := make([]models.Tag, 0, len(*tags))
+
+	for _, tag := range *tags {
+		out = append(out, databaseTagToTag(&tag))
+	}
+
+	return out
 }

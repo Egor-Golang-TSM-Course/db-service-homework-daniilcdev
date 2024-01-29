@@ -6,6 +6,7 @@ import (
 	"db-service/handlers/auth"
 	"db-service/internal"
 	"db-service/internal/database"
+	"db-service/models"
 	"encoding/json"
 	"errors"
 	"io"
@@ -176,4 +177,23 @@ func (s *PostsStorage) DeletePost(ctx context.Context, w http.ResponseWriter, r 
 
 func SearchContent(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 
+}
+
+func DatabasePostToPost(post *database.Post) models.Post {
+	return models.Post{
+		Id:       post.ID,
+		Title:    post.Title,
+		Content:  post.Content.String,
+		AuthorId: post.UserID,
+		Tags:     post.Tags,
+	}
+}
+
+func databasePostsToPosts(posts *[]database.Post) []models.Post {
+	r := make([]models.Post, 0, len(*posts))
+
+	for _, post := range *posts {
+		r = append(r, DatabasePostToPost(&post))
+	}
+	return r
 }

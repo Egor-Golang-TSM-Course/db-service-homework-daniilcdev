@@ -5,6 +5,7 @@ import (
 	"db-service/handlers/auth"
 	"db-service/internal"
 	"db-service/internal/database"
+	"db-service/models"
 	"encoding/json"
 	"net/http"
 )
@@ -69,5 +70,29 @@ func (cs *CommentsStorage) GetAllComments(w http.ResponseWriter, r *http.Request
 			databasePostCommentsToComments(&comments),
 		)
 	}
+}
 
+func databasePostCommentToComment(dbComment *database.PostComment) models.Comment {
+	return models.Comment{
+		Text:      dbComment.CommentText,
+		CreatedAt: dbComment.CreatedAt,
+
+		Author: models.Author{
+			Id: dbComment.UserID,
+		},
+	}
+}
+
+func databasePostCommentsToComments(dbComments *[]database.PostComment) *models.Comments {
+	r := make([]models.Comment, 0, len(*dbComments))
+
+	for _, dbComment := range *dbComments {
+		r = append(r,
+			databasePostCommentToComment(&dbComment),
+		)
+	}
+
+	return &models.Comments{
+		Comments: r,
+	}
 }
