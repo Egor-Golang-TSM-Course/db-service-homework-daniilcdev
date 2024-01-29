@@ -39,27 +39,25 @@ const (
 func (m authMiddleware) HandlerFunc(handler middlewareHandler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		accessToken, err := getAccessToken(r.Header)
-
 		if err != nil {
-			internal.RespondWithError(w, 403, fmt.Sprintf("Auth error: %v", err))
+			internal.RespondWithError(w, http.StatusForbidden, fmt.Sprintf("Auth error: %v", err))
 			return
 		}
 
-		err = VerifyAccessToken(accessToken)
-		if err != nil {
+		if err = VerifyAccessToken(accessToken); err != nil {
 			internal.RespondWithError(w, http.StatusUnauthorized, "invalid access token")
 			return
 		}
 
 		user, err := m.Auth.AuthorizeUser(r.Context(), accessToken)
 
-		if err != nil {
+		switch {
+		case err != nil:
 			internal.RespondWithError(w, http.StatusBadRequest, fmt.Sprintf("unauthorized access %v", err))
-			return
+		default:
+			ctx := context.WithValue(r.Context(), UserData, user)
+			handler(ctx, w, r)
 		}
-
-		ctx := context.WithValue(r.Context(), UserData, user)
-		handler(ctx, w, r)
 	}
 }
 
@@ -70,7 +68,6 @@ func (us *UserService) AuthorizeUser(ctx context.Context, accessToken string) (*
 }
 
 func getAccessToken(headers http.Header) (string, error) {
-
 	val := headers.Get("Authorization")
 	if val == "" {
 		return "", errors.New("no authentication info found")
@@ -78,13 +75,12 @@ func getAccessToken(headers http.Header) (string, error) {
 
 	vals := strings.Split(val, " ")
 
-	if len(vals) != 2 {
+	switch {
+	case len(vals) != 2:
 		return "", errors.New("malformed auth header")
-	}
-
-	if vals[0] != "Bearer" {
+	case vals[0] != "Bearer":
 		return "", errors.New("malformed first part of auth header")
+	default:
+		return vals[1], nil
 	}
-
-	return vals[1], nil
 }
