@@ -79,7 +79,7 @@ func (ts *TagsStorage) AddTag(ctx context.Context, w http.ResponseWriter, r *htt
 		defer cancel()
 
 		// TODO: research how to implement with `sqlc`
-		sql := fmt.Sprintf(fmtInsertNewTag, strings.Join(tagData.NewTags, "','"))
+		sql := fmt.Sprintf(fmtInsertNewTag, strings.Join(tagsData.NewTags, "','"))
 		ts.q.ExecRaw(timeout, sql)
 	}
 }
