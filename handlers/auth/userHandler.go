@@ -1,9 +1,11 @@
 package auth
 
 import (
+	"db-service/handlers"
 	"db-service/internal"
 	"db-service/internal/database"
 	"db-service/models"
+	"fmt"
 
 	"encoding/json"
 	"net/http"
@@ -14,28 +16,23 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func (us *UserService) Register(w http.ResponseWriter, r *http.Request) {
-	decoder := json.NewDecoder(r.Body)
-
+func (us *UserService) Register(w http.ResponseWriter, r *http.Request) error {
 	params := createUserRequestParams{}
-	err := decoder.Decode(&params)
+	err := json.NewDecoder(r.Body).Decode(&params)
 
 	if err != nil {
-		internal.RespondWithError(w, http.StatusBadRequest, internal.ErrInvalidJson)
-		return
+		return &handlers.HttpError{Code: http.StatusBadRequest, Err: err}
 	}
 
 	pwdBytes := []byte(params.Password)
 	if len(pwdBytes) > 72 || len(pwdBytes) == 0 {
-		internal.RespondWithError(w, http.StatusBadRequest, errInvalidPasswordLength)
-		return
+		return &handlers.HttpError{Code: http.StatusBadRequest, Err: errInvalidPasswordLength}
 	}
 
 	pwdHash, err := bcrypt.GenerateFromPassword([]byte(params.Password), bcrypt.DefaultCost)
 
 	if err != nil {
-		internal.RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
+		return &handlers.HttpError{Code: http.StatusInternalServerError, Err: err}
 	}
 
 	user, err := us.db.CreateUser(r.Context(), database.CreateUserParams{
@@ -48,44 +45,40 @@ func (us *UserService) Register(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		internal.RespondWithError(w, http.StatusBadRequest, errCantCreateUser)
-		return
+		return &handlers.HttpError{Code: http.StatusBadRequest, Err: errCantCreateUser}
 	}
 
-	internal.RespondWithJSON(w, http.StatusCreated, databaseUserToUser(user))
+	fmt.Fprint(w, databaseUserToUser(user))
+	internal.SetHeaders(w, http.StatusOK)
+	return nil
 }
 
-func (us *UserService) Login(w http.ResponseWriter, r *http.Request) {
-	decoder := json.NewDecoder(r.Body)
-
+func (us *UserService) Login(w http.ResponseWriter, r *http.Request) error {
 	params := createUserRequestParams{}
-	err := decoder.Decode(&params)
+	err := json.NewDecoder(r.Body).Decode(&params)
 
 	if err != nil {
-		internal.RespondWithError(w, http.StatusBadRequest, internal.ErrInvalidJson)
-		return
+		return &handlers.HttpError{Code: http.StatusBadRequest, Err: internal.ErrInvalidJson}
 	}
 
 	pwdBytes := []byte(params.Password)
 	if len(pwdBytes) > 72 || len(pwdBytes) == 0 {
-		internal.RespondWithError(w, http.StatusBadRequest, errInvalidPasswordLength)
-		return
+		return &handlers.HttpError{Code: http.StatusBadRequest, Err: errInvalidPasswordLength}
 	}
 
 	user, err := us.db.UserByEmail(r.Context(), params.Email)
 
 	if err != nil {
-		internal.RespondWithError(w, http.StatusNotFound, errUserNotFound)
-		return
+		return &handlers.HttpError{Code: http.StatusNotFound, Err: errUserNotFound}
 	}
 
 	if bcrypt.CompareHashAndPassword(user.PwdHash, pwdBytes) != nil {
-		internal.RespondWithJSON(w, http.StatusBadRequest, errInvalidCredentials)
-		return
+		return &handlers.HttpError{Code: http.StatusBadRequest, Err: errInvalidCredentials}
 	}
 
-	userData := databaseUserToAuthorizedUser(user)
-	internal.RespondWithJSON(w, http.StatusOK, userData)
+	fmt.Fprint(w, databaseUserToAuthorizedUser(user))
+	internal.SetHeaders(w, http.StatusOK)
+	return nil
 }
 
 func databaseUserToUser(dbUser database.User) models.User {

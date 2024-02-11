@@ -2,30 +2,28 @@ package comments
 
 import (
 	"context"
+	"db-service/handlers"
 	"db-service/handlers/auth"
 	"db-service/internal"
 	"db-service/internal/database"
 	"db-service/models"
 	"encoding/json"
+	"fmt"
 	"net/http"
 )
 
-func (cs *CommentsStorage) CreateComment(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func (cs *CommentsStorage) CreateComment(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	postId, err := internal.PostIdFromURLParams(r)
 
 	if err != nil {
-		internal.RespondWithError(w, http.StatusBadRequest, internal.ErrInvalidPostId)
-		return
+		return &handlers.HttpError{Code: http.StatusBadRequest, Err: internal.ErrInvalidPostId}
 	}
 
 	userData := ctx.Value(auth.UserData).(*database.User)
 
-	commentData := commentDto{}
-	decoder := json.NewDecoder(r.Body)
-	err = decoder.Decode(&commentData)
-	if err != nil {
-		internal.RespondWithError(w, http.StatusBadRequest, internal.ErrInvalidJson)
-		return
+	var commentData commentDto
+	if err = json.NewDecoder(r.Body).Decode(&commentData); err != nil {
+		return &handlers.HttpError{Code: http.StatusBadRequest, Err: internal.ErrInvalidJson}
 	}
 
 	comment, err := cs.q.CreateComment(ctx,
@@ -35,23 +33,20 @@ func (cs *CommentsStorage) CreateComment(ctx context.Context, w http.ResponseWri
 			UserID:      userData.ID,
 		})
 
-	switch {
-	case err != nil:
-		internal.RespondWithError(w, http.StatusInternalServerError, err)
-	default:
-		internal.RespondWithJSON(
-			w, http.StatusCreated,
-			databasePostCommentToComment(&comment),
-		)
+	if err != nil {
+		return &handlers.HttpError{Code: http.StatusInternalServerError, Err: err}
 	}
+
+	fmt.Fprint(w, databasePostCommentToComment(&comment))
+	internal.SetHeaders(w, http.StatusCreated)
+	return nil
 }
 
-func (cs *CommentsStorage) GetAllComments(w http.ResponseWriter, r *http.Request) {
+func (cs *CommentsStorage) GetAllComments(w http.ResponseWriter, r *http.Request) error {
 	postId, err := internal.PostIdFromURLParams(r)
 
 	if err != nil {
-		internal.RespondWithError(w, http.StatusBadRequest, internal.ErrInvalidPostId)
-		return
+		return &handlers.HttpError{Code: http.StatusBadRequest, Err: internal.ErrInvalidPostId}
 	}
 
 	comments, err := cs.q.GetPostComments(r.Context(),
@@ -61,15 +56,14 @@ func (cs *CommentsStorage) GetAllComments(w http.ResponseWriter, r *http.Request
 			Limit:  10,
 		})
 
-	switch {
-	case err != nil:
-		internal.RespondWithError(w, http.StatusInternalServerError, err)
-	default:
-		internal.RespondWithJSON(
-			w, http.StatusOK,
-			databasePostCommentsToComments(&comments),
-		)
+	if err != nil {
+		return &handlers.HttpError{Code: http.StatusInternalServerError, Err: err}
 	}
+
+	fmt.Fprint(w, databasePostCommentsToComments(&comments))
+	internal.SetHeaders(w, http.StatusOK)
+
+	return nil
 }
 
 func databasePostCommentToComment(dbComment *database.PostComment) models.Comment {
