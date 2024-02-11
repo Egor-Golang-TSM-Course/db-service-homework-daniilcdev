@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/golang-jwt/jwt"
@@ -13,48 +12,43 @@ type Claims struct {
 	jwt.StandardClaims
 }
 
+const secret = "TOKEN_SECRET"
+
 func NewAccessToken(claims Claims) (string, error) {
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	return accessToken.SignedString([]byte(os.Getenv("TOKEN_SECRET")))
+	return accessToken.SignedString([]byte(os.Getenv(secret)))
 }
 
 func NewRefreshToken(claims jwt.StandardClaims) (string, error) {
 	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	return refreshToken.SignedString([]byte(os.Getenv("TOKEN_SECRET")))
+	return refreshToken.SignedString([]byte(os.Getenv(secret)))
 }
 
 func ParseAccessToken(accessToken string) *Claims {
 	parsedAccessToken, _ := jwt.ParseWithClaims(accessToken, &Claims{},
 		func(token *jwt.Token) (interface{}, error) {
-			return []byte(os.Getenv("TOKEN_SECRET")), nil
+			return []byte(os.Getenv(secret)), nil
 		})
 
 	return parsedAccessToken.Claims.(*Claims)
 }
 
 func VerifyAccessToken(accessToken string) error {
-	token, err := jwt.Parse(accessToken,
+	_, err := jwt.Parse(accessToken,
 		func(t *jwt.Token) (interface{}, error) {
-			return []byte(os.Getenv("TOKEN_SECRET")), nil
+			return []byte(os.Getenv(secret)), nil
 		},
 	)
 
-	switch {
-	case err != nil:
-		return err
-	case !token.Valid:
-		return fmt.Errorf("invalid token")
-	default:
-		return nil
-	}
+	return err
 }
 
 func ParseRefreshToken(refreshToken string) *jwt.StandardClaims {
 	parsedRefreshToken, _ := jwt.ParseWithClaims(refreshToken, &jwt.StandardClaims{},
 		func(token *jwt.Token) (interface{}, error) {
-			return []byte(os.Getenv("TOKEN_SECRET")), nil
+			return []byte(os.Getenv(secret)), nil
 		})
 
 	return parsedRefreshToken.Claims.(*jwt.StandardClaims)

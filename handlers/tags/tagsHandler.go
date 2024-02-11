@@ -9,6 +9,7 @@ import (
 	"db-service/models"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -40,23 +41,7 @@ func (ts *TagsStorage) AddTag(ctx context.Context, w http.ResponseWriter, r *htt
 		return
 	}
 
-	tags := append(post.Tags, tagsData.NewTags...)
-
-	{ // remove duplicates
-		unique := make(map[string]struct{}, len(post.Tags))
-
-		for _, tag := range tags {
-			unique[tag] = struct{}{}
-		}
-
-		tags = tags[:0]
-		fmt.Println(unique)
-
-		for tag := range unique {
-			tags = append(tags, tag)
-		}
-		fmt.Println(tags)
-	}
+	tags := internal.Distinct(append(post.Tags, tagsData.NewTags...))
 
 	if len(tags) == len(post.Tags) {
 		internal.RespondWithJSON(w, http.StatusAlreadyReported, posts.DatabasePostToPost(&post))
@@ -69,18 +54,20 @@ func (ts *TagsStorage) AddTag(ctx context.Context, w http.ResponseWriter, r *htt
 		Tags:   tags,
 	})
 
-	switch {
-	case err != nil:
+	if err != nil {
 		internal.RespondWithError(w, http.StatusInternalServerError, err)
-	default:
-		internal.RespondWithJSON(w, http.StatusOK, posts.DatabasePostToPost(&post))
+		return
+	}
 
-		timeout, cancel := context.WithTimeout(ctx, 500*time.Millisecond)
-		defer cancel()
+	internal.RespondWithJSON(w, http.StatusOK, posts.DatabasePostToPost(&post))
 
-		// TODO: research how to implement with `sqlc`
-		sql := fmt.Sprintf(fmtInsertNewTag, strings.Join(tagsData.NewTags, "','"))
-		ts.q.ExecRaw(timeout, sql)
+	timeout, cancel := context.WithTimeout(ctx, 500*time.Millisecond)
+	defer cancel()
+
+	// TODO: research how to implement with `sqlc`
+	sql := fmt.Sprintf(fmtInsertNewTag, strings.Join(tagsData.NewTags, "','"))
+	if err := ts.q.ExecRaw(timeout, sql); err != nil {
+		log.Println("failed to update shared Tags collection")
 	}
 }
 
