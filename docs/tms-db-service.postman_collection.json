@@ -1,0 +1,352 @@
+{
+	"info": {
+		"_postman_id": "4b29f507-bf29-4450-bb13-2b42123b2568",
+		"name": "tms-db-service",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "3955259"
+	},
+	"item": [
+		{
+			"name": "posts",
+			"item": [
+				{
+					"name": "CreatePost",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImVhZTgyNDg5LTQzNzItNDU0MC1hMzA4LWI3MmVkMWRlYTE3YSIsImtleSI6IkpESmhKREV3SkRSaFptNUxiSEEzVUV4YVVuZDNOelZMVVVkd1VDNHVSamt5UzBKQ09EQlFTRzF2YmpKaVExWklaV1ZETmtodlVYcE9ZMXBwIiwiZXhwIjoxNzA2MDgzNjI4LCJpYXQiOjE3MDU5OTcyMjh9.VyxnkdihJovKRTK4fphEeYIG_6KuQ9SX8X50ijm0b8U",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\":\"Very First Post\",\n    \"content\":\"\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8008/v1/posts",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8008",
+							"path": [
+								"v1",
+								"posts"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetAllPosts",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImVhZTgyNDg5LTQzNzItNDU0MC1hMzA4LWI3MmVkMWRlYTE3YSIsImtleSI6IkpESmhKREV3SkRSaFptNUxiSEEzVUV4YVVuZDNOelZMVVVkd1VDNHVSamt5UzBKQ09EQlFTRzF2YmpKaVExWklaV1ZETmtodlVYcE9ZMXBwIiwiZXhwIjoxNzA2MDgzNjI4LCJpYXQiOjE3MDU5OTcyMjh9.VyxnkdihJovKRTK4fphEeYIG_6KuQ9SX8X50ijm0b8U",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8008/v1/posts",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8008",
+							"path": [
+								"v1",
+								"posts"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetPostById",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImVhZTgyNDg5LTQzNzItNDU0MC1hMzA4LWI3MmVkMWRlYTE3YSIsImtleSI6IkpESmhKREV3SkRSaFptNUxiSEEzVUV4YVVuZDNOelZMVVVkd1VDNHVSamt5UzBKQ09EQlFTRzF2YmpKaVExWklaV1ZETmtodlVYcE9ZMXBwIiwiZXhwIjoxNzA2MDgzNjI4LCJpYXQiOjE3MDU5OTcyMjh9.VyxnkdihJovKRTK4fphEeYIG_6KuQ9SX8X50ijm0b8U",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8008/v1/posts/4",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8008",
+							"path": [
+								"v1",
+								"posts",
+								"4"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UpdatePost",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImVhZTgyNDg5LTQzNzItNDU0MC1hMzA4LWI3MmVkMWRlYTE3YSIsImtleSI6IkpESmhKREV3SkRSaFptNUxiSEEzVUV4YVVuZDNOelZMVVVkd1VDNHVSamt5UzBKQ09EQlFTRzF2YmpKaVExWklaV1ZETmtodlVYcE9ZMXBwIiwiZXhwIjoxNzA2MDgzNjI4LCJpYXQiOjE3MDU5OTcyMjh9.VyxnkdihJovKRTK4fphEeYIG_6KuQ9SX8X50ijm0b8U",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Very Nice Title\",\n    \"content\": \"some content\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8008/v1/posts/2",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8008",
+							"path": [
+								"v1",
+								"posts",
+								"2"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DeletePost",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "AccessToken $2a$10$4afnKlp7PLZRww75KQGpP..F92KBB80PHmon2bCVHeeC6HoQzNcZi",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8008/v1/posts/3",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8008",
+							"path": [
+								"v1",
+								"posts",
+								"3"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "comments",
+			"item": [
+				{
+					"name": "getPostComments",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8008/v1/posts/4/comments",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8008",
+							"path": [
+								"v1",
+								"posts",
+								"4",
+								"comments"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "createPostComment",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImVhZTgyNDg5LTQzNzItNDU0MC1hMzA4LWI3MmVkMWRlYTE3YSIsImV4cCI6MTcwNjE3Mzk0OSwiaWF0IjoxNzA2MDg3NTQ5fQ.eIzsd5EeVt6eDoACPoQkyfdPt18JdnBnHO4yU12m-Ik",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"commentBody\": \"I added my awesome comment!\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8008/v1/posts/4/comments",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8008",
+							"path": [
+								"v1",
+								"posts",
+								"4",
+								"comments"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "tags",
+			"item": [
+				{
+					"name": "getAllTags",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8008/v1/tags",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8008",
+							"path": [
+								"v1",
+								"tags"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "addTagToPost",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImVhZTgyNDg5LTQzNzItNDU0MC1hMzA4LWI3MmVkMWRlYTE3YSIsImV4cCI6MTcwNjE3Mzk0OSwiaWF0IjoxNzA2MDg3NTQ5fQ.eIzsd5EeVt6eDoACPoQkyfdPt18JdnBnHO4yU12m-Ik",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"newTags\":[\n        // \"New\",\n        // \"First Post\",\n        // \"New version\",\n        \"Changed recently\",\n        \"Streak - 2 days!\"\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8008/v1/posts/4/tags",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8008",
+							"path": [
+								"v1",
+								"posts",
+								"4",
+								"tags"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Register",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"name\": \"Daniil\",\n    \"email\": \"d.cherepkov@gmail.com\",\n    \"password\": \"pwd1234\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8008/v1/users/register",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8008",
+					"path": [
+						"v1",
+						"users",
+						"register"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Login",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\": \"d.cherepkov@gmail.com\",\n    \"password\": \"pwd1234\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8008/v1/users/login",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8008",
+					"path": [
+						"v1",
+						"users",
+						"login"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
